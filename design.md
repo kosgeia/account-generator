@@ -122,17 +122,32 @@ account:
   cache:
     batch-size: 10
 ```
-## 🔁 Cache Usage Flow
 
-1. Call `getNextAccount()`
-2. If cache is **empty**:
-   - Check the database for `UNUSED` accounts
-   - If none are found → **generate** a new batch of accounts
-3. Retrieve an account number from the cache
-4. Mark the retrieved account as **ASSIGNED** in the database
-5. If an account is **returned**:
-   - Add it back to the cache
-   - Mark it as **UNUSED** in the database
+## Account Generator Flow - Design Explanation
+
+### Prefetch Accounts
+
+The `prefetchAccounts` method is designed to ensure that the cache is populated with account numbers before they are requested by any threads. This process helps optimize performance by reducing database calls and enhancing response time for account retrieval.
+
+#### Logic:
+1. **Check Cache First**:
+    - The method attempts to **fetch unused accounts** first from the **cache**.
+    - This is achieved through the method `accountCache.getFromCache()`, which retrieves the next available account number for assignment.
+
+2. **Database Fallback**:
+    - If the cache is empty (i.e., no unused accounts are available), it attempts to fetch the **unused accounts** directly from the database.
+    - The repository method `accountRepository.findFirstByStatus(AccountStatus.UNUSED)` is used to fetch the first account with a status of **UNUSED**.
+    - If an unused account is found in the database, it is added to the cache, making it available for retrieval by other methods or threads.
+
+3. **Generating New Accounts**:
+    - If no unused accounts are found in the database (e.g., cache and DB are depleted), the method triggers the account generation process by calling `generateNewAccounts()`.
+    - This step is logged as a warning: `log.warn("Generating new accounts, cache is depleted")`.
+
+#### Thought Process:
+- **Cache-First Design**: The system prioritizes checking the cache to minimize database load and improve performance.
+- **Graceful Fallback**: The fallback logic ensures that if the cache is empty, the system can still continue generating new accounts, thereby preventing disruptions.
+- **Logging for Transparency**: Logging is added to track the state of the system, especially when new accounts are generated, which helps in monitoring and debugging.
+
 
 ## 🔁 Cache Usage Flow
 
