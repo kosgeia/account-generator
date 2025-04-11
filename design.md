@@ -1,4 +1,4 @@
-# 🏦 Account Generation System – Full Design Overview
+# 🏦 Account Generation Service Design Overview
 
 This document details the architecture, design rationale, and operational flow of the `AccountGeneratorService` and its supporting components. It explains how the system ensures **account uniqueness**, handles **collisions**, manages **caching**, and provides a safe, scalable solution for account number generation.
 
